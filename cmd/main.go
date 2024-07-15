@@ -2,23 +2,22 @@ package main
 
 import (
 	"errors"
+	Bot "jokes_bot/internal/bot"
 	"log"
 	"os"
 
 	"github.com/joho/godotenv"
 )
 
-const TIMER int8 = 24
+const DELAY float32 = 24.00
 
 func getEnv() (string, error) {
 	if err := godotenv.Load(); err != nil {
-		log.Panic(".env файл не найден")
-		return "", err
+		return "", errors.New(".env файл не найден")
 	}
 
 	if api, exists := os.LookupEnv("API_KEY"); !exists {
-		log.Panic("Записи об api ключе не существует")
-		return "", errors.New("Записи об api ключе не существует")
+		return "", errors.New("записи об api ключе не существует")
 
 	} else {
 		return api, nil
@@ -29,15 +28,25 @@ func getEnv() (string, error) {
 func main() {
 
 	log.Println("Начало работы")
-	log.Println("Получение данных из .env файла")
+	log.Println("получение данных из .env файла")
 
 	api_key, err := getEnv()
 	if err != nil {
-		log.Fatal("Невозможно продолжить работу программы")
+		log.Fatal(err)
 	}
-	log.Println("api ключ (", api_key, ") получен.")
+	log.Println("api ключ (" + api_key + ") получен.")
 
-	// TODO: инициализация бота
+	bot := Bot.NewBot(api_key)
+	log.Println("бот инициализирован")
 
-	// TODO: вызов парсера
+	if resp, err := bot.UploadJoke(); err != nil {
+		log.Fatal(err)
+	} else {
+		log.Println("новая шутейка:", resp)
+	}
+
+	// TODO: бот должен работать регулярно по DELAY
+	// for {
+	// }
+
 }
