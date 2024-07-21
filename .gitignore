@@ -1,4 +1,2 @@
-*.mod
 .env
-*.sum
 example.json
