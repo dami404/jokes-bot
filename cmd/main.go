@@ -3,24 +3,33 @@ package main
 import (
 	"errors"
 	Bot "jokes_bot/internal/bot"
+	JokesSources "jokes_bot/internal/parser"
 	"log"
 	"os"
+	"time"
 
 	"github.com/joho/godotenv"
 )
 
-const DELAY float32 = 24.00
+const DELAY float64 = 3.00
 
-func getEnv() (string, error) {
+// TODO: refactor
+func getEnv() (api_key, access_token, user_id, domain string, err error) {
 	if err := godotenv.Load(); err != nil {
-		return "", errors.New(".env файл не найден")
+		return "", "", "", "", errors.New(".env файл не найден")
 	}
 
-	if api, exists := os.LookupEnv("API_KEY"); !exists {
-		return "", errors.New("записи об api ключе не существует")
-
+	if api_key, exists := os.LookupEnv("API_KEY"); !exists {
+		return "", "", "", "", errors.New("записи об api ключе не существует")
+	} else if access_token, exists := os.LookupEnv("ACCESS_TOKEN"); !exists {
+		return "", "", "", "", errors.New("записи об access token не существует")
+	} else if user_id, exists := os.LookupEnv("USER_ID"); !exists {
+		return "", "", "", "", errors.New("записи об user id не существует")
+	} else if domain, exists := os.LookupEnv("VK_DOMAIN"); !exists {
+		return "", "", "", "", errors.New("записи об domain не существует")
 	} else {
-		return api, nil
+		return api_key, access_token, user_id, domain, nil
+
 	}
 
 }
@@ -30,23 +39,26 @@ func main() {
 	log.Println("Начало работы")
 	log.Println("получение данных из .env файла")
 
-	api_key, err := getEnv()
+	api_key, access_token, user_id, domain, err := getEnv()
 	if err != nil {
 		log.Fatal(err)
 	}
 	log.Println("api ключ (" + api_key + ") получен.")
+	log.Println("access token (" + access_token + ") получен.")
+	log.Println("user id  (" + user_id + ") получен.")
+	log.Println("domain (" + domain + ") получен.")
 
+	js := JokesSources.NewParser(user_id, domain, access_token)
 	bot := Bot.NewBot(api_key)
 	log.Println("бот инициализирован")
 
-	if resp, err := bot.UploadJoke(); err != nil {
-		log.Fatal(err)
-	} else {
-		log.Println("новая шутейка:", resp)
-	}
-
 	// TODO: бот должен работать регулярно по DELAY
-	// for {
-	// }
-
+	for {
+		if resp, err := bot.UploadJoke(js); err != nil {
+			log.Println(err)
+		} else {
+			log.Println("новая шутейка:", resp)
+		}
+		time.Sleep(time.Hour * time.Duration(DELAY))
+	}
 }
