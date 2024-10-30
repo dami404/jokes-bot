@@ -3,7 +3,7 @@ package main
 import (
 	"errors"
 	Bot "jokes_bot/internal/bot"
-	JokesSources "jokes_bot/internal/parser"
+	"jokes_bot/internal/parser"
 	"log"
 	"os"
 	"time"
@@ -48,17 +48,27 @@ func main() {
 	log.Println("user id  (" + user_id + ") получен.")
 	log.Println("domain (" + domain + ") получен.")
 
-	js := JokesSources.NewParser(user_id, domain, access_token)
+	// tg := parser.TGChannel{
+	// 	Date: 0,
+	// }
+
+	vkParser := parser.NewParser(user_id, domain, access_token)
 	bot := Bot.NewBot(api_key)
 	log.Println("бот инициализирован")
 
-	// TODO: бот должен работать регулярно по DELAY
 	for {
-		if resp, err := bot.UploadJoke(js); err != nil {
+		joke, err := parser.GetJoke(vkParser, &vkParser.Date)
+		if err != nil {
+			log.Println(err)
+		}
+
+		resp, err := bot.UploadJoke(joke)
+		if err != nil {
 			log.Println(err)
 		} else {
 			log.Println("новая шутейка:", resp)
 		}
+
 		time.Sleep(time.Hour * time.Duration(DELAY))
 	}
 }

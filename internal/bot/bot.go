@@ -2,7 +2,6 @@ package bot
 
 import (
 	"io"
-	"jokes_bot/internal/parser"
 	"log"
 	"net/http"
 )
@@ -39,14 +38,9 @@ func (bot *Bot) sendRequest(method string) (string, error) {
 }
 
 // TODO: шутку брать из парсера
-func (bot *Bot) UploadJoke(js *parser.JokesSources) (string, error) {
-	if joke, err := js.GetJoke(); err != nil {
-		return "", err
-	} else {
-		method := "sendMessage?chat_id=@white_rock_off&text=" + joke
-		body, err := bot.sendRequest(method)
-		log.Println("новая шутейка:", joke)
-
-		return body, err
-	}
+func (bot *Bot) UploadJoke(joke string) (string, error) {
+	method := "sendMessage?chat_id=@white_rock_off&text=" + joke
+	body, err := bot.sendRequest(method)
+	log.Println("новая шутейка:", joke)
+	return body, err
 }
