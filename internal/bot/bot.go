@@ -2,6 +2,7 @@ package bot
 
 import (
 	"io"
+	"jokes_bot/internal/utils"
 	"log"
 	"net/http"
 )
@@ -20,21 +21,14 @@ func NewBot(api_key string) *Bot {
 	return &Bot{api_key}
 }
 
-// TODO: refactor
 func (bot *Bot) sendRequest(method string) (string, error) {
-	if resp, err := http.Get("https://api.telegram.org/bot" + bot.API_KEY + "/" + method); err != nil {
-		return "", err
-	} else {
-		if body, err := io.ReadAll(resp.Body); err != nil {
-			defer resp.Body.Close()
-			return "", err
-		} else {
-			resp.Body.Close()
-			return string(body), nil
-		}
+	resp, err := http.Get("https://api.telegram.org/bot" + bot.API_KEY + "/" + method)
+	utils.CheckErrors(err)
 
-	}
-
+	body, err := io.ReadAll(resp.Body)
+	defer resp.Body.Close()
+	utils.CheckErrors(err)
+	return string(body), nil
 }
 
 // TODO: шутку брать из парсера

@@ -4,6 +4,7 @@ import (
 	json "encoding/json"
 	"errors"
 	"io"
+	"jokes_bot/internal/utils"
 	"net/http"
 	"strings"
 )
@@ -45,26 +46,17 @@ func (tg TGChannel) NewParser() *TGChannel {
 	}
 }
 
-// TODO: refactor
 func (vk *VKPublic) SendRequest() (string, error) {
 	req := "https://api.vk.ru/method/wall.get?v=5.199&owner_id=" + vk.Owner_id + "&domain=" + vk.Domain
 	res, err := http.NewRequest(http.MethodGet, req, nil)
-	if err != nil {
-		return "", err
-	} else {
-		res.Header.Add("Authorization", "Bearer "+vk.Access_token)
-		resp, err := http.DefaultClient.Do(res)
-		if err != nil {
-			return "", err
-		}
-		if body, err := io.ReadAll(resp.Body); err != nil {
-			defer resp.Body.Close()
-			return "", err
-		} else {
-			resp.Body.Close()
-			return string(body), nil
-		}
-	}
+	utils.CheckErrors(err)
+	res.Header.Add("Authorization", "Bearer "+vk.Access_token)
+	resp, err := http.DefaultClient.Do(res)
+	utils.CheckErrors(err)
+	body, err := io.ReadAll(resp.Body)
+	defer resp.Body.Close()
+	utils.CheckErrors(err)
+	return string(body), nil
 }
 
 // TODO: refactor
@@ -72,13 +64,16 @@ func (tg *TGChannel) SendRequest() (string, error) {
 	return "", nil
 }
 
-// TODO: убрать ненужные переносы, кроме '/n -' (прямая речь)
 func validateJoke(joke string) (string, error) {
-	if strings.Contains(joke, "http") || strings.Contains(joke, "t.me") {
-		return "", errors.New("это не шутка, а реклама")
-	}
+	isValidated := strings.Contains(joke, "http") || strings.Contains(joke, "t.me")
+	utils.ThrowErrorsIfFalse(isValidated, errors.New("Это реклама"))
 	return joke, nil
 }
+
+// TODO: убрать ненужные переносы, кроме '/n -' (прямая речь)
+// TODO: \" - обработать экранирование
+// func formatJoke(joke string) string {
+// }
 
 func convertToJSON(jsonString *string) (map[string]interface{}, error) {
 	var data map[string]interface{}
@@ -86,27 +81,21 @@ func convertToJSON(jsonString *string) (map[string]interface{}, error) {
 	return data, err
 }
 
-// TODO: refactor 108-112
 func GetJoke(p Parser, date *int) (string, error) {
-	// var date *int
 	var text string
 	resp, err := p.SendRequest()
-	if err != nil {
-		return "", err
-	}
+	utils.CheckErrors(err)
 
-	// println(resp)
 	data, err := convertToJSON(&resp)
-	if err != nil {
-		return "", err
-	}
-	if response, ok := data["response"].(map[string]interface{}); ok {
-		if items, ok := response["items"].([]interface{}); ok {
-			jokePost := items[1].(map[string]interface{})
-			*date, _ = jokePost["date"].(int)
-			text = jokePost["text"].(string)
-		}
-	}
-	joke, err := validateJoke(text)
-	return joke, err
+	utils.CheckErrors(err)
+	response, ok := data["response"].(map[string]interface{})
+	utils.ThrowErrorsIfFalse(ok, errors.New("Тег response отсутствует"))
+	items, ok := response["items"].([]interface{})
+	utils.ThrowErrorsIfFalse(ok, errors.New("Тег items отсутствует"))
+	jokePost := items[1].(map[string]interface{})
+	*date, _ = jokePost["date"].(int)
+	text = jokePost["text"].(string)
+	// joke, err := validateJoke(text)
+	// return joke, err
+	return text, err
 }
