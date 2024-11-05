@@ -51,13 +51,13 @@ func (tg TGChannel) NewParser() *TGChannel {
 func (vk *VKPublic) sendRequest() (string, error) {
 	req := "https://api.vk.ru/method/wall.get?v=5.199&owner_id=" + vk.Owner_id + "&domain=" + vk.Domain
 	res, err := http.NewRequest(http.MethodGet, req, nil)
-	utils.CheckErrors("sendRequest-1-", err)
+	utils.CheckErrors("parser-sendRequest-1-", err)
 	res.Header.Add("Authorization", "Bearer "+vk.Access_token)
 	resp, err := http.DefaultClient.Do(res)
-	utils.CheckErrors("sendRequest-2-", err)
+	utils.CheckErrors("parser-sendRequest-2-", err)
 	body, err := io.ReadAll(resp.Body)
 	defer resp.Body.Close()
-	utils.CheckErrors("sendRequest-3-", err)
+	utils.CheckErrors("parser-sendRequest-3-", err)
 	return string(body), nil
 }
 
@@ -69,7 +69,7 @@ func (tg *TGChannel) sendRequest() (string, error) {
 func validateJoke(joke *string) (*string, error) {
 	isValidated := !(strings.Contains(*joke, "http") || strings.Contains(*joke, "t.me"))
 
-	utils.ThrowErrorsIfFalse("validateJoke", isValidated, errors.New("Это реклама"))
+	utils.ThrowErrorsIfFalse("validateJoke-", isValidated, errors.New("Это реклама"))
 
 	return joke, nil
 }
@@ -91,21 +91,25 @@ func convertToJSON(jsonString *string) (map[string]interface{}, error) {
 	return data, err
 }
 
-func GetJoke(p Parser, date *int) (string, error) {
+func GetJoke(p Parser) (string, error) {
 	var text string
 	resp, err := p.sendRequest()
 	utils.CheckErrors("GetJoke-1-", err)
 
 	data, err := convertToJSON(&resp)
 	utils.CheckErrors("GetJoke-2-", err)
+
 	response, ok := data["response"].(map[string]interface{})
 	utils.ThrowErrorsIfFalse("GetJoke-3", ok, errors.New("Тег response отсутствует"))
+
 	items, ok := response["items"].([]interface{})
 	utils.ThrowErrorsIfFalse("GetJoke-4", ok, errors.New("Тег items отсутствует"))
+
 	jokePost := items[1].(map[string]interface{})
-	*date, _ = jokePost["date"].(int)
 	text = jokePost["text"].(string)
+
 	joke, err := validateJoke(&text)
 	formatJoke(joke)
+
 	return *joke, err
 }
