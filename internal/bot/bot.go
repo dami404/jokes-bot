@@ -21,20 +21,20 @@ func NewBot(api_key string) *Bot {
 	return &Bot{api_key}
 }
 
-func (bot *Bot) sendRequest(method string) (string, error) {
-	resp, err := http.Get("https://api.telegram.org/bot" + bot.API_KEY + "/" + method)
-	utils.CheckErrors(err)
+func (bot *Bot) sendRequest(joke string) (string, error) {
+	url := "https://api.telegram.org/bot" + bot.API_KEY + "/sendMessage?chat_id=@white_rock_off&text=" + joke
+	resp, err := http.Get(url)
+	utils.CheckErrors("sendRequest-1-", err)
 
 	body, err := io.ReadAll(resp.Body)
 	defer resp.Body.Close()
-	utils.CheckErrors(err)
+	utils.CheckErrors("sendRequest-2-", err)
 	return string(body), nil
 }
 
 // TODO: шутку брать из парсера
 func (bot *Bot) UploadJoke(joke string) (string, error) {
-	method := "sendMessage?chat_id=@white_rock_off&text=" + joke
-	body, err := bot.sendRequest(method)
-	log.Println("новая шутейка:", joke)
+	body, err := bot.sendRequest(joke)
+	log.Println("Новый анекдот:", joke)
 	return body, err
 }
