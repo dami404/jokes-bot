@@ -1,14 +1,16 @@
 package utils
 
-import "log"
+import (
+	"log"
+)
 
-func CheckErrors(err error) {
+func CheckErrors(funcName string, err error) {
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal(funcName, err)
 	}
 }
-func ThrowErrorsIfFalse(true bool, err error) {
+func ThrowErrorsIfFalse(funcName string, true bool, err error) {
 	if !true {
-		log.Fatal(err)
+		log.Fatal(funcName, err)
 	}
 }

@@ -25,14 +25,14 @@ var err error
 
 func ENVInit() {
 	err := godotenv.Load()
-	utils.CheckErrors(err)
+	utils.CheckErrors("ENVInit-", err)
 }
 
 // TODO: refactor
 func getENV(parName string) (value string, err error) {
 	err = godotenv.Load()
 	value, exists := os.LookupEnv(parName)
-	utils.ThrowErrorsIfFalse(exists, errors.New("Такой переменной ENV не существует"))
+	utils.ThrowErrorsIfFalse("getENV", exists, errors.New("Такой переменной ENV не существует"))
 	return value, nil
 }
 
@@ -44,7 +44,7 @@ func main() {
 	ENVInit()
 	for k, _ := range ENVs {
 		ENVs[k], err = getENV(k)
-		utils.CheckErrors(err)
+		utils.CheckErrors("main-", err)
 	}
 	log.Println("api ключ получен.")
 	log.Println("access token получен.")
